@@ -44,26 +44,9 @@ def adaptive_gamma_correction(y_channel):
     y_gamma = np.array(255 * (y_channel / 255) ** (1 / gamma), dtype='uint8')
     return y_gamma
 
-# ============================================================
-# 3. Gray World Balance
-# ============================================================
-def gray_world_balance(img):
-    avg_b = np.mean(img[:, :, 0])
-    avg_g = np.mean(img[:, :, 1])
-    avg_r = np.mean(img[:, :, 2])
-    avg_gray = (avg_b + avg_g + avg_r) / 3
-    kb = avg_gray / avg_b if avg_b != 0 else 1.0
-    kg = avg_gray / avg_g if avg_g != 0 else 1.0
-    kr = avg_gray / avg_r if avg_r != 0 else 1.0
-    balanced = np.zeros_like(img, dtype=np.float32)
-    balanced[:, :, 0] = img[:, :, 0] * kb
-    balanced[:, :, 1] = img[:, :, 1] * kg
-    balanced[:, :, 2] = img[:, :, 2] * kr
-    balanced = np.clip(balanced, 0, 255).astype(np.uint8)
-    return balanced
 
 # ============================================================
-# 4. CUSTOM ENHANCEMENT
+# 3. CUSTOM ENHANCEMENT
 # ============================================================
 def custom_enhancement_v2(img):
     retinex_img = MSRCR_adaptive(img)
@@ -74,15 +57,14 @@ def custom_enhancement_v2(img):
     y_clahe = clahe.apply(y_gamma)
     ycrcb_enhanced = cv2.merge((y_clahe, cr, cb))
     img_enhanced = cv2.cvtColor(ycrcb_enhanced, cv2.COLOR_YCrCb2BGR)
-    img_balanced = gray_world_balance(img_enhanced)
-    fusion = cv2.addWeighted(img_balanced, 0.7, img, 0.3, 0)
+    fusion = cv2.addWeighted(img_enhanced, 0.7, img, 0.3, 0)
     gaussian = cv2.GaussianBlur(fusion, (0, 0), 2)
     sharpened = cv2.addWeighted(fusion, 1.3, gaussian, -0.3, 0)
     final = cv2.fastNlMeansDenoisingColored(sharpened, None, 7, 7, 7, 15)
     return final
 
 # ============================================================
-# 5. LIME Enhancement
+# 4. LIME Enhancement
 # ============================================================
 def box_filter(img, r):
     ksize = (2*r+1, 2*r+1)
@@ -115,7 +97,7 @@ def lime_enhancement(img, r=15, eps=1e-3, gamma=0.9):
     return enhanced
 
 # ============================================================
-# 6. FACE DETECTION
+# 5. FACE DETECTION
 # ============================================================
 def face_detection_retina(img):
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -130,7 +112,7 @@ def face_detection_retina(img):
     return faces, confs
 
 # ============================================================
-# 7. GUI & Main App
+# 6. GUI & Main App
 # ============================================================
 class FaceDetectionApp:
     def __init__(self, master):
